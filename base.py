@@ -220,6 +220,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
                 prev_lower_bound = self.lower_bound_
 
                 log_prob_norm, log_resp = self._e_step(X)
+                # import pdb;pdb.set_trace()
+                # print log_prob_norm
                 self._m_step(X, log_resp)
                 self.lower_bound_ = self._compute_lower_bound(
                     log_resp, log_prob_norm)
@@ -277,8 +279,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
             start_ = end_
             idx += 1
 
-
-        return np.mean(log_prob_norm), np.concatenate(log_resp, axis=0)
+        return np.mean(np.concatenate(log_prob_norm, axis=0)), np.concatenate(log_resp, axis=0)
 
     @abstractmethod
     def _m_step(self, X, log_resp):

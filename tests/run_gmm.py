@@ -38,24 +38,30 @@ from bayesian_mixture import BayesianGaussianMixture
 
 color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
                               'darkorange'])
-marker_iter = ['>', 'o']
 
-def plot_results(X, Y_, means, covariances, index, title):
+def plot_results(X, Y_, means, covariances, index, title, covar_type='diag'):
     splot = plt.subplot(1, 1, 1 + index)
     for i, (mean, covar, color) in enumerate(zip(
             means, covariances, color_iter)):
-        covar = np.diag(covar[:2])
+        if covar_type == 'diag':
+            covar = np.diag(covar[:2])
+        elif covar_type == 'tied':
+            covar = covariances
+        elif covar_type == 'spherical':
+            covar = np.eye(means.shape[1]) * covar
+        else:
+            covar = covar[:2, :2]
         v, w = linalg.eigh(covar)
         v = 2. * np.sqrt(2.) * np.sqrt(v)
         u = w[0] / linalg.norm(w[0])
         # as the DP will not use every component it has access to
         # unless it needs it, we shouldn't plot the redundant
         # components.
-        if not np.any(np.array(Y_) == i):
+        if not np.any(np.concatenate(Y_, axis=0) == i):
             continue
 
         for idx in range(len(X)):
-            plt.scatter(X[idx][Y_[idx] == i, 0], X[idx][Y_[idx] == i, 1], .8, color=color, marker=marker_iter[idx])
+            plt.scatter(X[idx][Y_[idx] == i, 0], X[idx][Y_[idx] == i, 1], .8, color=color)
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
@@ -76,10 +82,8 @@ def plot_results(X, Y_, means, covariances, index, title):
 n_docs = 2
 
 n_components = 3
-# weights = [[.2, .5, .3], [.6, .1, .3]]
+# weights = [[.3, .4, .3], [.5, .2, .3]]
 weights = np.random.dirichlet((1, n_docs, n_components), n_docs)
-print "gold weights:"
-print weights
 
 
 # Number of samples per component
@@ -89,7 +93,7 @@ n_samples = 1000
 np.random.seed(0)
 C = np.array([[0., -0.1], [1.7, .4]])
 word_cls = [np.dot(np.random.randn(n_samples, 2), C), .7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
-                np.random.randn(n_samples, 2) * np.random.randn(n_samples, 2)]
+                .4 * np.random.randn(n_samples, 2) + .6 * np.random.randn(n_samples, 2)]
 
 # Generate a corpus
 corpus = []
@@ -104,14 +108,21 @@ for each in range(n_docs):
     corpus.append(X)
 # import pdb;pdb.set_trace()
 # Fit a Gaussian mixture with EM using five components
-gmm = GaussianMixture(n_components=n_components, covariance_type='diag', max_iter=100, verbose=2).fit(corpus)
+covar_type = 'diag'
+gmm = GaussianMixture(n_components=n_components, covariance_type=covar_type, tol=1e-6, max_iter=1000, n_init=1, verbose=1).fit(corpus)
+gmm2 = GaussianMixture(n_components=n_components, covariance_type=covar_type, tol=1e-6, max_iter=1000, n_init=10, verbose=1).fit(corpus)
+
+print "gold weights:"
+print weights
+
 
 # print "means: %s" % gmm.means_
 # print "covariances: %s" % gmm.covariances_
 print "system output weights:"
 print gmm.weights_
+print "system output weights2:"
+print gmm2.weights_
+# plot_results(corpus, gmm.predict(corpus, range(len(corpus))), gmm.means_, gmm.covariances_, 0,
+#              'Gaussian Mixture', covar_type)
 
-plot_results(corpus, gmm.predict(corpus, range(len(corpus))), gmm.means_, gmm.covariances_, 0,
-             'Gaussian Mixture')
-
-plt.show()
+# plt.show()
