@@ -79,21 +79,21 @@ def plot_results(X, Y_, means, covariances, index, title, covar_type='diag'):
 
 
 # Number of docs
-n_docs = 2
+n_docs = 10
 
 n_components = 3
 # weights = [[.3, .4, .3], [.5, .2, .3]]
-weights = np.random.dirichlet((1, n_docs, n_components), n_docs)
+weights = np.random.dirichlet([1. / n_components for i in range(n_components)], n_docs)
 
 
 # Number of samples per component
-n_samples = 1000
+n_samples = 10000
 
 # Generate random sample, two components
 np.random.seed(0)
 C = np.array([[0., -0.1], [1.7, .4]])
-word_cls = [np.dot(np.random.randn(n_samples, 2), C), .7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
-                .4 * np.random.randn(n_samples, 2) + .6 * np.random.randn(n_samples, 2)]
+word_cls = [np.dot(np.random.randn(n_samples, 2), np.random.randn(2, 2)), .7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
+               np.array([3, -1]) + .1 * np.random.randn(n_samples, 2) + 1.5 * np.random.randn(n_samples, 2)]
 
 # Generate a corpus
 corpus = []
@@ -106,23 +106,20 @@ for each in range(n_docs):
     idx2 = np.random.choice(range(n_samples), n2, replace=False)
     X = np.r_[word_cls[0][idx0], word_cls[1][idx1], word_cls[2][idx2]]
     corpus.append(X)
-# import pdb;pdb.set_trace()
+
 # Fit a Gaussian mixture with EM using five components
 covar_type = 'diag'
 gmm = GaussianMixture(n_components=n_components, covariance_type=covar_type, tol=1e-6, max_iter=1000, n_init=1, verbose=1).fit(corpus)
-gmm2 = GaussianMixture(n_components=n_components, covariance_type=covar_type, tol=1e-6, max_iter=1000, n_init=10, verbose=1).fit(corpus)
+
+print "means: %s" % gmm.means_
+print "covariances: %s" % gmm.covariances_
+print "system output weights:"
+print gmm.weights_
 
 print "gold weights:"
 print weights
 
+plot_results(corpus, gmm.predict(corpus, range(len(corpus))), gmm.means_, gmm.covariances_, 0,
+             'Gaussian Mixture', covar_type)
 
-# print "means: %s" % gmm.means_
-# print "covariances: %s" % gmm.covariances_
-print "system output weights:"
-print gmm.weights_
-print "system output weights2:"
-print gmm2.weights_
-# plot_results(corpus, gmm.predict(corpus, range(len(corpus))), gmm.means_, gmm.covariances_, 0,
-#              'Gaussian Mixture', covar_type)
-
-# plt.show()
+plt.show()

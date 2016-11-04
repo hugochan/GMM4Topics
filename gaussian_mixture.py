@@ -386,7 +386,7 @@ def _compute_log_det_cholesky(matrix_chol, covariance_type, n_features):
     return log_det_chol
 
 
-def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
+def estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
     """Estimate the log Gaussian probability.
 
     Parameters
@@ -672,7 +672,7 @@ class GaussianMixture(BaseMixture):
             self.covariances_, self.covariance_type)
 
     def _estimate_log_prob(self, X):
-        return _estimate_log_gaussian_prob(
+        return estimate_log_gaussian_prob(
             X, self.means_, self.precisions_cholesky_, self.covariance_type)
 
     def _estimate_log_weights(self, weights):
